@@ -43,22 +43,22 @@ FOREIGN KEY (AlunoID) REFERENCES Alunos(AlunoID)
 
 GO
 
--- InserÁ„o de DADOS
+-- Inser√ß√£o de DADOS
 
 INSERT INTO Alunos (Nome)
 VALUES
-('Jo„o Silva'),
+('Jo√£o Silva'),
 ('Maria Oliveira'),
 ('Pedro Santos');
 
 INSERT INTO Disciplinas (NomeDisciplina)
 VALUES
-('ProgramaÁ„o Orientada a Objetos'),
+('Programa√ß√£o Orientada a Objetos'),
 ('Bancos de Dados 2'),
 ('Engenharia de Software 1');
 
 GO
--- Criando um TRIGGER para incluir um aluno tem sua mÈdia de notas geral, abaixo de 7.1, È incluido na tabela de apoio
+-- Criando um TRIGGER para incluir um aluno tem sua m√©dia de notas geral, abaixo de 7.1, √© incluido na tabela de apoio
 
 CREATE TRIGGER trg_AvaliaMedia
 	ON Provas
@@ -66,25 +66,52 @@ AFTER INSERT, UPDATE
 
 AS
 BEGIN
-	DECLARE @AlunoID INT;		--DECLARE, AQUI EST√O AS VARI¡VEIS UTILIZADAS
+	DECLARE @AlunoID INT;		--DECLARE, AQUI EST√ÉO AS VARI√ÅVEIS UTILIZADAS
 	DECLARE @Media DECIMAL (4,2); 
 
-	SELECT @AlunoID = i.AlunoID FROM inserted i;  -- ATRIBUINDO VAL,ORES ¿S VARI¡VEIS DECLARADAS
-	SELECT @Media = AVG(Nota) FROM Provas WHERE AlunoID = @AlunoID;  -- OBS. O inserted  È um objeto que relaciona a tabela que recebeu a alteraÁ„o/inserÁ„o e disparou o gatilho (TRIGGER)
+	SELECT @AlunoID = i.AlunoID FROM inserted i;  -- ATRIBUINDO VALORES √ÄS VARI√ÅVEIS DECLARADAS
+	SELECT @Media = AVG(Nota) FROM Provas WHERE AlunoID = @AlunoID;  -- OBS. O inserted  √© um objeto que relaciona a tabela que recebeu a altera√ß√£o/inser√ß√£o e disparou o gatilho (TRIGGER)
 
 
 	IF @Media < 7
 	BEGIN 
-	IF NOT EXISTS (SELECT 1 FROM ApoioAlunos WHERE AlunoID = @AlunoID)	-- Verificando no IF se o ALUNO j· n„o est· na tabela de apoio
+	IF NOT EXISTS (SELECT 1 FROM ApoioAlunos WHERE AlunoID = @AlunoID)	-- Verificando no IF se o ALUNO j√° n√£o est√° na tabela de apoio
 				BEGIN
-				INSERT INTO ApoioAlunos (AlunoID, AlunoMediaGeral) VALUES (@AlunoID, @Media); -- Caso a media calculada for menor que 7, e o aluno j· n„o estiver na tabela de apoio, ele È inserido
+				INSERT INTO ApoioAlunos (AlunoID, AlunoMediaGeral) VALUES (@AlunoID, @Media); -- Caso a media calculada for menor que 7, e o aluno j√° n√£o estiver na tabela de apoio, ele √© inserido
 				END
 			END
-		ELSE -- (ELSE) Se a mÈdia n„o for menor que 7, ent„o o aluno È removido da tabela de apoio
+		ELSE -- (ELSE) Se a m√©dia n√£o for menor que 7, ent√£o o aluno √© removido da tabela de apoio
 		BEGIN
 			DELETE FROM ApoioAlunos WHERE AlunoID = @AlunoID;
 		END
 	END;
 
 GO
+
+-- Verificando o TRIGGER INSERINDO DADOS
+
+INSERT INTO Provas (AlunoID, DisciplinaID, Nota)
+VALUES
+(1, 1, 6.5),
+(1, 2, 5.8),
+(1, 3, 7.2);
+
+GO
+
+SELECT * FROM ApoioAlunos;
+
+-- Verificando o TRIGGER MODIFICANDO DADOS
+
+UPDATE Provas
+SET Nota = 10
+WHERE
+ProvaID = 2 AND AlunoID=1;
+
+SELECT * FROM ApoioAlunos;
+
+-- =================================== MODIFICANDO O TRIGGER E ADICIONANDO FUN√á√ïES ===================================
+
+-- Melhore a Trigger constru√≠da para incluir qual a disciplina que o aluno tem a menor nota na tabela ApoioAlunos;
+
+
 
