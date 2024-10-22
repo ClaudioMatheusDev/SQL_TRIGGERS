@@ -113,5 +113,44 @@ SELECT * FROM ApoioAlunos;
 
 -- Melhore a Trigger construída para incluir qual a disciplina que o aluno tem a menor nota na tabela ApoioAlunos;
 
+ALTER TRIGGER trg_AvaliaMedia
+ON Provas
+AFTER INSERT, UPDATE
 
+AS
+BEGIN
+    DECLARE @AlunoID INT;
+    DECLARE @Media DECIMAL(4,2);
+    DECLARE @MenorNota DECIMAL(4,2);
+    DECLARE @NomeDisciplina NVARCHAR(100); -- Adicionando as variáveis Menor Nota e Nome da Disciplina
+
+
+    SELECT @AlunoID = i.AlunoID FROM inserted i;
+
+
+    SELECT @Media = AVG(Nota) FROM Provas WHERE AlunoID = @AlunoID;
+
+    
+    SELECT TOP 1 @MenorNota = p.Nota, @NomeDisciplina = d.NomeDisciplina-- Obtendo a menor nota do aluno e a disciplina correspondente
+    FROM Provas p
+    INNER JOIN Disciplinas d ON p.DisciplinaID = d.DisciplinaID
+    WHERE p.AlunoID = @AlunoID
+    ORDER BY p.Nota ASC;  -- Ordenando por nota crescente para pegar a menor
+
+
+    IF @Media < 7.1
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM ApoioAlunos WHERE AlunoID = @AlunoID)
+        BEGIN
+            INSERT INTO ApoioAlunos (AlunoID, AlunoMediaGeral, NomeDisciplina)
+            VALUES (@AlunoID, @Media, @NomeDisciplina);
+        END
+    END
+    ELSE
+    BEGIN
+        DELETE FROM ApoioAlunos WHERE AlunoID = @AlunoID;
+    END
+END;
+
+GO
 
